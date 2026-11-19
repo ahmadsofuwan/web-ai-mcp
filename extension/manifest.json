@@ -1,0 +1,78 @@
+{
+  "manifest_version": 3,
+  "name": "Web AI MCP Agent",
+  "version": "1.3.2",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuSgX7H417ayVGUW32d4GDPjypN9J0QXQKEIdBDqjyWuT0tYW51V0A8DN2ycScEA4+5M8jV4wyTuYzSZVgRnqxeDTUTCqJJ3Vy/LXMyf2eniMyGYBMfNVv3WJuMUymGoTBJQ6KgLV2g+wKV+9Z2zBLwnSS8rAg8yq/7wk3SjMXO11dcONesDWis1Olc9vqn942+3XX+08rUnxYOmA+LZ9F0gDiXzHQXtozrc7+NBR2rf7llH5Pb4n3ICa3WTQisCXB3W5LYBpkSyn0I01UMMSHq4ssRmajAjkyWn26z100v7fn3Zm4nRQwu6Pd6PwR8hFQT2z5cdgLgq1R+am8EpaFwIDAQAB",
+  "description": "Menghubungkan AI Web (ChatGPT, Claude, Gemini, DeepSeek, Qwen, dll.) ke Local MCP Server secara otomatis lengkap dengan Memori Lintas AI & Auto-Start Server.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*",
+    "https://aistudio.google.com/*",
+    "https://chat.deepseek.com/*",
+    "https://chat.qwen.ai/*",
+    "https://chat.qwenlm.ai/*",
+    "https://grok.com/*",
+    "https://www.perplexity.ai/*",
+    "https://poe.com/*",
+    "https://chat.mistral.ai/*",
+    "https://copilot.microsoft.com/*"
+  ],
+  "action": {
+    "default_title": "Buka Web AI MCP Agent",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.qwen.ai/*",
+    "https://chat.qwenlm.ai/*",
+        "https://grok.com/*",
+        "https://www.perplexity.ai/*",
+        "https://poe.com/*",
+        "https://chat.mistral.ai/*",
+        "https://copilot.microsoft.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

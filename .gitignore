@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Local MCP Server runtime, auth token & personal session memory
+# (dibuat otomatis saat server dijalankan pertama kali)
+mcp-server/config.json
+mcp-server/server.log
+mcp-server/server.pid
+mcp-server/memory/sessions.json
+
+# Environment & secrets
+.env
+.env.*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

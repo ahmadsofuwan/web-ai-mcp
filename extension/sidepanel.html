@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web AI MCP Agent</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="icons/icon48.png" alt="MCP" class="brand-icon" />
+      <div>
+        <div class="brand-title">Web AI MCP Agent</div>
+        <div class="brand-sub" id="server-version">Local Sandboxed MCP</div>
+      </div>
+    </div>
+    <div class="status-wrap">
+      <span class="status-pill offline" id="status-pill">Terputus</span>
+      <button type="button" class="icon-btn" id="btn-refresh" title="Hubungkan ulang">↻</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button type="button" class="tab active" data-tab="agent">Agent</button>
+    <button type="button" class="tab" data-tab="memory">Memori</button>
+    <button type="button" class="tab" data-tab="explorer">Explorer</button>
+    <button type="button" class="tab" data-tab="settings">Pengaturan</button>
+  </nav>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- TAB 1: AGENT -->
+  <main class="panel active" id="tab-agent">
+    <section class="card" id="connect-banner" style="display:none">
+      <div class="card-title warn-text">MCP Server Belum Aktif</div>
+      <p class="muted">
+        Klik tombol di bawah untuk menyalakan Local MCP Server secara otomatis di background (tanpa buka terminal).
+      </p>
+      <div class="row gap-6 mt-8">
+        <button type="button" class="btn primary flex-1" id="btn-banner-start-server">▶ Nyalakan Server Otomatis</button>
+        <button type="button" class="btn" id="btn-goto-settings">Pengaturan</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Folder Workspace Aktif</div>
+        <label class="switch-inline" title="Jika aktif, AI hanya boleh membaca file dan tidak bisa mengubah/menghapus file.">
+          <input type="checkbox" id="toggle-readonly" />
+          <span>Read-Only</span>
+        </label>
+      </div>
+
+      <div class="workspace-path" id="workspace-root-display">-</div>
+
+      <div class="row gap-6 mt-8">
+        <button type="button" class="btn primary flex-1" id="btn-pick-folder">📂 Pilih Folder...</button>
+        <button type="button" class="btn" id="btn-toggle-manual-path" title="Ketik path folder manual">Ketik Path</button>
+      </div>
+
+      <div id="manual-path-box" class="mt-8 hidden">
+        <div class="row gap-6">
+          <input type="text" id="input-workspace-path" class="input flex-1" placeholder="Contoh: D:\laragon\chatAi" />
+          <button type="button" class="btn primary" id="btn-apply-path">Pakai</button>
+        </div>
+        <select id="select-recent-workspaces" class="input mt-6">
+          <option value="">-- Folder terakhir digunakan --</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Aktifkan / Lanjut Agent di AI Web</div>
+        <span class="badge read" id="agent-memory-badge">Memori: Kosong</span>
+      </div>
+      <p class="muted" id="agent-memory-hint">
+        Otomatis menyuntikkan protokol MCP + struktur folder + <b>memori session aktif</b> ke tab AI web sekarang dan langsung mengirimnya. Pindah AI tanpa jelaskan ulang!
+      </p>
+      <textarea id="input-initial-task" class="input mt-8" rows="2" placeholder="Tugas / instruksi lanjutan (opsional), mis: Lanjutkan dari langkah terakhir..."></textarea>
+      <div class="row gap-6 mt-8">
+        <button type="button" class="btn primary flex-1" id="btn-inject-prompt">⚡ Mulai / Lanjut di AI Ini</button>
+        <button type="button" class="btn" id="btn-copy-prompt" title="Salin prompt ke clipboard">Salin</button>
+      </div>
+      <button type="button" class="btn full mt-6" id="btn-scan-run-latest" title="Jika AI sudah membalas dengan blok mcp-tool namun belum jalan otomatis, klik ini untuk langsung mengeksekusinya">▶ Scan &amp; Jalankan Balasan AI Terakhir</button>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Mode Full Otomatis (Tanpa Kopas)</div>
+        <span class="badge read">AUTO LOOP</span>
+      </div>
+      <label class="toggle-row">
+        <div>
+          <div class="toggle-label">Auto-run Baca &amp; Cari File (Read-Only)</div>
+          <div class="toggle-desc">Otomatis jalankan <code>read_file</code>, <code>list_directory</code>, <code>search_files</code>, <code>find_files</code>.</div>
+        </div>
+        <input type="checkbox" id="toggle-autorun" checked />
+      </label>
+
+      <label class="toggle-row">
+        <div>
+          <div class="toggle-label">Auto-run Buat &amp; Edit File (Write/Edit)</div>
+          <div class="toggle-desc">Otomatis jalankan <code>write_file</code>, <code>edit_file</code>, <code>create_directory</code>. (<code>delete_file</code> tetap wajib klik manual demi keamanan).</div>
+        </div>
+        <input type="checkbox" id="toggle-autorun-write" checked />
+      </label>
+
+      <label class="toggle-row">
+        <div>
+          <div class="toggle-label">Auto-send hasil kembali ke AI</div>
+          <div class="toggle-desc">Otomatis masukkan &amp; kirim hasil MCP ke chat AI agar agent terus berjalan sampai selesai.</div>
+        </div>
+        <input type="checkbox" id="toggle-autosend" checked />
+      </label>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Uji Tool MCP Manual</div>
+        <span class="badge read" id="tool-count-badge">0 tools</span>
+      </div>
+      <select id="manual-tool-select" class="input mt-6"></select>
+      <textarea id="manual-tool-args" class="input mono mt-6" rows="3" placeholder='{"path": "."}'></textarea>
+      <div class="row gap-6 mt-6">
+        <button type="button" class="btn primary flex-1" id="btn-run-manual-tool">▶ Jalankan Tool</button>
+        <button type="button" class="btn" id="btn-send-manual-output">Kirim ke Chat</button>
+      </div>
+      <pre id="manual-tool-output" class="code-box mt-8 hidden"></pre>
+    </section>
+  </main>
+
+  <!-- TAB 2: MEMORI SESSION -->
+  <main class="panel" id="tab-memory">
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Session Memori (Lintas AI)</div>
+        <button type="button" class="btn sm" id="btn-memory-refresh" title="Muat ulang memori">↻</button>
+      </div>
+      <p class="muted">
+        Semua progres &amp; file yang diubah tersimpan di MCP Server. Pindah ke ChatGPT, Claude, Gemini, atau DeepSeek cukup klik tombol lanjut di bawah.
+      </p>
+
+      <div class="row gap-6 mt-8">
+        <select id="select-session" class="input flex-1"></select>
+        <button type="button" class="btn sm primary" id="btn-new-session" title="Buat session baru">+ Baru</button>
+      </div>
+
+      <div id="new-session-box" class="row gap-6 mt-6 hidden">
+        <input type="text" id="input-new-session-title" class="input flex-1" placeholder="Nama session, mis: Fitur Login" />
+        <button type="button" class="btn sm primary" id="btn-create-session-confirm">Buat</button>
+      </div>
+
+      <div class="row gap-6 mt-8">
+        <button type="button" class="btn primary flex-1" id="btn-handoff-ai">🔄 Lanjut di AI Ini (Kirim Memori)</button>
+      </div>
+      <div class="row gap-6 mt-6">
+        <button type="button" class="btn sm flex-1" id="btn-reset-session">Bersihkan Isi Session</button>
+        <button type="button" class="btn sm" id="btn-delete-session">Hapus Session</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Detail Memori Session Aktif</div>
+
+      <label class="field-label mt-8" for="mem-goal">Tujuan Utama (Goal)</label>
+      <input type="text" id="mem-goal" class="input" placeholder="Contoh: Membuat sistem login & dashboard admin" />
+
+      <label class="field-label mt-8" for="mem-summary">Ringkasan Progres &amp; Konteks</label>
+      <textarea id="mem-summary" class="input" rows="3" placeholder="Ringkasan apa yang sudah dibangun, arsitektur, dll."></textarea>
+
+      <label class="field-label mt-8" for="mem-completed">Yang Sudah Dikerjakan (1 item per baris)</label>
+      <textarea id="mem-completed" class="input" rows="3" placeholder="- Sudah membuat tabel users&#10;- Sudah memperbaiki bug validasi"></textarea>
+
+      <label class="field-label mt-8" for="mem-next">Langkah Berikutnya / TODO (1 item per baris)</label>
+      <textarea id="mem-next" class="input" rows="3" placeholder="- Tambahkan halaman profil&#10;- Uji coba login"></textarea>
+
+      <label class="field-label mt-8" for="mem-notes">Catatan Teknis / Keputusan Penting (1 item per baris)</label>
+      <textarea id="mem-notes" class="input" rows="2" placeholder="- Database memakai MySQL Laragon"></textarea>
+
+      <button type="button" class="btn primary full mt-10" id="btn-save-memory">💾 Simpan Perubahan Memori</button>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">File yang Sudah Diubah (Auto-Tracked)</div>
+        <span class="badge read" id="mem-files-count">0 file</span>
+      </div>
+      <div id="mem-files-list" class="tools-list mt-8">
+        <div class="muted">Belum ada file yang diubah di session ini.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- TAB 3: EXPLORER -->
+  <main class="panel" id="tab-explorer">
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">File Explorer Workspace</div>
+        <div class="row gap-4">
+          <button type="button" class="btn sm" id="btn-dir-up">⬆ Naik</button>
+          <button type="button" class="btn sm" id="btn-dir-refresh">↻</button>
+        </div>
+      </div>
+      <div class="breadcrumb mt-6" id="explorer-breadcrumb">.</div>
+      <div id="explorer-list" class="file-list mt-8">
+        <div class="muted">Hubungkan ke server untuk melihat isi folder.</div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="file-preview-card">
+      <div class="card-head">
+        <div class="card-title mono" id="preview-filename">file.js</div>
+        <button type="button" class="btn sm" id="btn-close-preview">✕</button>
+      </div>
+      <div class="row gap-6 mt-6">
+        <button type="button" class="btn primary flex-1 sm" id="btn-insert-preview">+ Sisipkan ke Chat AI</button>
+        <button type="button" class="btn sm" id="btn-copy-preview">Salin</button>
+      </div>
+      <pre id="preview-content" class="code-box mt-8"></pre>
+    </section>
+  </main>
+
+  <!-- TAB 4: SETTINGS & LOG -->
+  <main class="panel" id="tab-settings">
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Kontrol Local MCP Server (Auto-Start)</div>
+        <span class="badge read">NATIVE HOST</span>
+      </div>
+      <p class="muted">
+        Jalankan, restart, atau hentikan MCP Server langsung dari extension tanpa buka CMD / <code>start-server.bat</code>.
+      </p>
+      <div class="row gap-6 mt-8">
+        <button type="button" class="btn primary flex-1" id="btn-server-start">▶ Start</button>
+        <button type="button" class="btn flex-1" id="btn-server-restart">↻ Restart</button>
+        <button type="button" class="btn" id="btn-server-stop">⏹ Stop</button>
+      </div>
+      <label class="toggle-row mt-8">
+        <div>
+          <div class="toggle-label">Auto-start server otomatis</div>
+          <div class="toggle-desc">Otomatis nyalakan MCP Server &amp; ambil Auth Token saat browser atau Side Panel dibuka.</div>
+        </div>
+        <input type="checkbox" id="toggle-autostart" checked />
+      </label>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Koneksi Local MCP Server</div>
+      <label class="field-label mt-8" for="input-server-url">Server URL</label>
+      <input type="text" id="input-server-url" class="input" placeholder="http://127.0.0.1:3847" />
+
+      <label class="field-label mt-8" for="input-auth-token">Auth Token (terisi otomatis oleh Native Host)</label>
+      <div class="row gap-6">
+        <input type="password" id="input-auth-token" class="input flex-1 mono" placeholder="Otomatis terisi saat Start Server..." />
+        <button type="button" class="btn" id="btn-toggle-token">👁</button>
+      </div>
+
+      <button type="button" class="btn primary full mt-10" id="btn-save-connect">Simpan &amp; Hubungkan</button>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Daftar MCP Tools Terdeteksi</div>
+      <div id="tools-list" class="tools-list mt-8">
+        <div class="muted">Belum terhubung.</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">Log Eksekusi Tool</div>
+        <button type="button" class="btn sm" id="btn-clear-log">Bersihkan</button>
+      </div>
+      <div id="log-list" class="log-list mt-8">
+        <div class="muted">Belum ada aktivitas.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

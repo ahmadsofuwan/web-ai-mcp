@@ -1,0 +1,9 @@
+{
+  "name": "com.webaimcp.host",
+  "description": "Native Messaging Host untuk menjalankan Web AI MCP Server secara otomatis dari Browser Extension",
+  "path": "D:\\laragon\\web-ai-mcp\\mcp-server\\native-host\\host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://kpblbaiiiiohhjjlfmajbclnkckjenbb/"
+  ]
+}
